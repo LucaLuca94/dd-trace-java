@@ -24,7 +24,7 @@ class JspWriterInstrumentationTest extends AgentTestRunner{
 
     then:
     2 * iastModule.onXss(string)
-    0 * _
+    0 * iastModule._
   }
 
   void 'test charArray'() {
@@ -40,6 +40,6 @@ class JspWriterInstrumentationTest extends AgentTestRunner{
 
     then:
     2 * iastModule.onXss(array)
-    0 * _
+    0 * iastModule._
   }
 }
