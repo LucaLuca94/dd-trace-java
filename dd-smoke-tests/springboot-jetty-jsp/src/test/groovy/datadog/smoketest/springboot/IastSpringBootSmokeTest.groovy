@@ -7,7 +7,6 @@ import okhttp3.Response
 import static datadog.trace.api.config.IastConfig.IAST_DEBUG_ENABLED
 import static datadog.trace.api.config.IastConfig.IAST_DETECTION_MODE
 import static datadog.trace.api.config.IastConfig.IAST_ENABLED
-import static datadog.trace.api.config.IastConfig.IAST_REDACTION_ENABLED
 
 class IastSpringBootSmokeTest extends AbstractIastServerSmokeTest {
 
