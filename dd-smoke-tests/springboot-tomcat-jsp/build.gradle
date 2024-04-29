@@ -7,7 +7,7 @@ plugins {
 }
 
 apply from: "$rootDir/gradle/java.gradle"
-description = 'SpringBoot Jetty JSP Smoke Tests.'
+description = 'SpringBoot Tomcat JSP Smoke Tests.'
 
 java {
   sourceCompatibility = '1.8'
@@ -28,6 +28,8 @@ dependencies {
 
   runtimeOnly("javax.servlet:jstl")
   runtimeOnly("org.apache.tomcat.embed:tomcat-embed-jasper")
+
+  providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
 
   testImplementation project(':dd-smoke-tests')
   testImplementation(testFixtures(project(":dd-smoke-tests:iast-util")))

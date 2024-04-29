@@ -63,11 +63,8 @@ tasks.register("unzip", Copy) {
 dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.5.12'
   providedRuntime group: 'org.springframework.boot', name: 'spring-boot-starter-tomcat', version: '2.5.12'
-  providedRuntime group: 'org.apache.tomcat.embed', name: 'tomcat-embed-jasper', version: '10.1.18'
   testImplementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
   testImplementation project(':dd-smoke-tests')
-  implementation project(':dd-smoke-tests:iast-util')
-  testImplementation(testFixtures(project(":dd-smoke-tests:iast-util")))
 }
 
 tasks.packageSources {

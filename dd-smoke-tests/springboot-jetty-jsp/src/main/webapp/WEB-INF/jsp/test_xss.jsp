@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-<title>Hdiv Spring Mvc Examples</title>
+<title>Test XSS</title>
 </head>
 <body>
 	<% String test = request.getParameter("test");%>
