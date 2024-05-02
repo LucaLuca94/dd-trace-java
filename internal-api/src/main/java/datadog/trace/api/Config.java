@@ -68,6 +68,7 @@ import static datadog.trace.api.ConfigDefaults.DEFAULT_HTTP_CLIENT_TAG_QUERY_STR
 import static datadog.trace.api.ConfigDefaults.DEFAULT_HTTP_SERVER_ERROR_STATUSES;
 import static datadog.trace.api.ConfigDefaults.DEFAULT_HTTP_SERVER_ROUTE_BASED_NAMING;
 import static datadog.trace.api.ConfigDefaults.DEFAULT_HTTP_SERVER_TAG_QUERY_STRING;
+import static datadog.trace.api.ConfigDefaults.DEFAULT_IAST_ANONYMOUS_CLASSES_ENABLED;
 import static datadog.trace.api.ConfigDefaults.DEFAULT_IAST_DEBUG_ENABLED;
 import static datadog.trace.api.ConfigDefaults.DEFAULT_IAST_HARDCODED_SECRET_ENABLED;
 import static datadog.trace.api.ConfigDefaults.DEFAULT_IAST_REDACTION_ENABLED;
@@ -121,6 +122,8 @@ import static datadog.trace.api.ConfigDefaults.DEFAULT_TRACE_REPORT_HOSTNAME;
 import static datadog.trace.api.ConfigDefaults.DEFAULT_TRACE_RESOLVER_ENABLED;
 import static datadog.trace.api.ConfigDefaults.DEFAULT_TRACE_X_DATADOG_TAGS_MAX_LENGTH;
 import static datadog.trace.api.ConfigDefaults.DEFAULT_WRITER_BAGGAGE_INJECT;
+import static datadog.trace.api.DDTags.DJM_ENABLED;
+import static datadog.trace.api.DDTags.DSM_ENABLED;
 import static datadog.trace.api.DDTags.HOST_TAG;
 import static datadog.trace.api.DDTags.INTERNAL_HOST_NAME;
 import static datadog.trace.api.DDTags.LANGUAGE_TAG_KEY;
@@ -145,6 +148,7 @@ import static datadog.trace.api.config.AppSecConfig.APPSEC_OBFUSCATION_PARAMETER
 import static datadog.trace.api.config.AppSecConfig.APPSEC_REPORTING_INBAND;
 import static datadog.trace.api.config.AppSecConfig.APPSEC_REPORT_TIMEOUT_SEC;
 import static datadog.trace.api.config.AppSecConfig.APPSEC_RULES_FILE;
+import static datadog.trace.api.config.AppSecConfig.APPSEC_SCA_ENABLED;
 import static datadog.trace.api.config.AppSecConfig.APPSEC_TRACE_RATE_LIMIT;
 import static datadog.trace.api.config.AppSecConfig.APPSEC_WAF_METRICS;
 import static datadog.trace.api.config.AppSecConfig.APPSEC_WAF_TIMEOUT;
@@ -222,6 +226,8 @@ import static datadog.trace.api.config.DebuggerConfig.DEBUGGER_UPLOAD_BATCH_SIZE
 import static datadog.trace.api.config.DebuggerConfig.DEBUGGER_UPLOAD_FLUSH_INTERVAL;
 import static datadog.trace.api.config.DebuggerConfig.DEBUGGER_UPLOAD_TIMEOUT;
 import static datadog.trace.api.config.DebuggerConfig.DEBUGGER_VERIFY_BYTECODE;
+import static datadog.trace.api.config.DebuggerConfig.THIRD_PARTY_EXCLUDES;
+import static datadog.trace.api.config.DebuggerConfig.THIRD_PARTY_INCLUDES;
 import static datadog.trace.api.config.GeneralConfig.API_KEY;
 import static datadog.trace.api.config.GeneralConfig.API_KEY_FILE;
 import static datadog.trace.api.config.GeneralConfig.APPLICATION_KEY;
@@ -268,6 +274,7 @@ import static datadog.trace.api.config.GeneralConfig.TRACE_TRIAGE;
 import static datadog.trace.api.config.GeneralConfig.TRIAGE_REPORT_DIR;
 import static datadog.trace.api.config.GeneralConfig.TRIAGE_REPORT_TRIGGER;
 import static datadog.trace.api.config.GeneralConfig.VERSION;
+import static datadog.trace.api.config.IastConfig.IAST_ANONYMOUS_CLASSES_ENABLED;
 import static datadog.trace.api.config.IastConfig.IAST_CONTEXT_MODE;
 import static datadog.trace.api.config.IastConfig.IAST_DEBUG_ENABLED;
 import static datadog.trace.api.config.IastConfig.IAST_DETECTION_MODE;
@@ -455,6 +462,7 @@ import static datadog.trace.api.config.TracerConfig.TRACE_X_DATADOG_TAGS_MAX_LEN
 import static datadog.trace.api.config.TracerConfig.WRITER_BAGGAGE_INJECT;
 import static datadog.trace.api.config.TracerConfig.WRITER_TYPE;
 import static datadog.trace.api.iast.IastDetectionMode.DEFAULT;
+import static datadog.trace.api.telemetry.LogCollector.SEND_TELEMETRY;
 import static datadog.trace.util.CollectionUtils.tryMakeImmutableList;
 import static datadog.trace.util.CollectionUtils.tryMakeImmutableSet;
 import static datadog.trace.util.Strings.propertyNameToEnvironmentVariableName;
@@ -720,6 +728,7 @@ public class Config {
   private final String appSecHttpBlockedTemplateHtml;
   private final String appSecHttpBlockedTemplateJson;
   private final UserEventTrackingMode appSecUserEventsTracking;
+  private final Boolean appSecScaEnabled;
   private final boolean apiSecurityEnabled;
   private final float apiSecurityRequestSampleRate;
 
@@ -737,6 +746,7 @@ public class Config {
   private final boolean iastStacktraceLeakSuppress;
   private final IastContext.Mode iastContextMode;
   private final boolean iastHardcodedSecretEnabled;
+  private final boolean iastAnonymousClassesEnabled;
 
   private final boolean ciVisibilityTraceSanitationEnabled;
   private final boolean ciVisibilityAgentlessEnabled;
@@ -824,6 +834,9 @@ public class Config {
   private final String debuggerSymbolIncludes;
   private final int debuggerSymbolFlushThreshold;
   private final boolean debuggerExceptionEnabled;
+
+  private final Set<String> debuggerThirdPartyIncludes;
+  private final Set<String> debuggerThirdPartyExcludes;
 
   private final boolean awsPropagationEnabled;
   private final boolean sqsPropagationEnabled;
@@ -1608,6 +1621,7 @@ public class Config {
         UserEventTrackingMode.fromString(
             configProvider.getStringNotEmpty(
                 APPSEC_AUTOMATED_USER_EVENTS_TRACKING, SAFE.toString()));
+    appSecScaEnabled = configProvider.getBoolean(APPSEC_SCA_ENABLED);
     apiSecurityEnabled =
         configProvider.getBoolean(
             API_SECURITY_ENABLED, DEFAULT_API_SECURITY_ENABLED, API_SECURITY_ENABLED_EXPERIMENTAL);
@@ -1652,6 +1666,9 @@ public class Config {
     iastHardcodedSecretEnabled =
         configProvider.getBoolean(
             IAST_HARDCODED_SECRET_ENABLED, DEFAULT_IAST_HARDCODED_SECRET_ENABLED);
+    iastAnonymousClassesEnabled =
+        configProvider.getBoolean(
+            IAST_ANONYMOUS_CLASSES_ENABLED, DEFAULT_IAST_ANONYMOUS_CLASSES_ENABLED);
 
     ciVisibilityTraceSanitationEnabled =
         configProvider.getBoolean(CIVISIBILITY_TRACE_SANITATION_ENABLED, true);
@@ -1866,6 +1883,9 @@ public class Config {
     debuggerExceptionEnabled =
         configProvider.getBoolean(DEBUGGER_EXCEPTION_ENABLED, DEFAULT_DEBUGGER_EXCEPTION_ENABLED);
 
+    debuggerThirdPartyIncludes = tryMakeImmutableSet(configProvider.getList(THIRD_PARTY_INCLUDES));
+    debuggerThirdPartyExcludes = tryMakeImmutableSet(configProvider.getList(THIRD_PARTY_EXCLUDES));
+
     awsPropagationEnabled = isPropagationEnabled(true, "aws", "aws-sdk");
     sqsPropagationEnabled = isPropagationEnabled(true, "sqs");
 
@@ -2065,6 +2085,14 @@ public class Config {
         configProvider.getBoolean(
             ProfilingConfig.PROFILING_TIMELINE_EVENTS_ENABLED,
             ProfilingConfig.PROFILING_TIMELINE_EVENTS_ENABLED_DEFAULT);
+
+    if (appSecScaEnabled != null
+        && appSecScaEnabled
+        && (!isTelemetryEnabled() || !isTelemetryDependencyServiceEnabled())) {
+      log.warn(
+          SEND_TELEMETRY,
+          "AppSec SCA is enabled but telemetry is disabled. AppSec SCA will not work.");
+    }
 
     log.debug("New instance: {}", this);
   }
@@ -2830,6 +2858,10 @@ public class Config {
     return iastHardcodedSecretEnabled;
   }
 
+  public boolean isIastAnonymousClassesEnabled() {
+    return iastAnonymousClassesEnabled;
+  }
+
   public boolean isCiVisibilityEnabled() {
     return instrumenterConfig.isCiVisibilityEnabled();
   }
@@ -3167,6 +3199,14 @@ public class Config {
     return debuggerExceptionEnabled;
   }
 
+  public Set<String> getThirdPartyIncludes() {
+    return debuggerThirdPartyIncludes;
+  }
+
+  public Set<String> getThirdPartyExcludes() {
+    return debuggerThirdPartyExcludes;
+  }
+
   public String getFinalDebuggerProbeUrl() {
     // by default poll from datadog agent
     return "http://" + agentHost + ":" + agentPort;
@@ -3411,6 +3451,10 @@ public class Config {
     return axisPromoteResourceName;
   }
 
+  public boolean isDataJobsEnabled() {
+    return instrumenterConfig.isDataJobsEnabled();
+  }
+
   /** @return A map of tags to be applied only to the local application root span. */
   public Map<String, Object> getLocalRootSpanTags() {
     final Map<String, String> runtimeTags = getRuntimeTags();
@@ -3419,6 +3463,8 @@ public class Config {
     result.put(LANGUAGE_TAG_KEY, LANGUAGE_TAG_VALUE);
     result.put(SCHEMA_VERSION_TAG_KEY, SpanNaming.instance().version());
     result.put(PROFILING_ENABLED, isProfilingEnabled() ? 1 : 0);
+    result.put(DSM_ENABLED, isDataStreamsEnabled() ? 1 : 0);
+    result.put(DJM_ENABLED, isDataJobsEnabled() ? 1 : 0);
 
     if (reportHostName) {
       final String hostName = getHostName();
@@ -3880,6 +3926,10 @@ public class Config {
 
   public boolean isTelemetryDebugRequestsEnabled() {
     return telemetryDebugRequestsEnabled;
+  }
+
+  public Boolean getAppSecScaEnabled() {
+    return appSecScaEnabled;
   }
 
   private <T> Set<T> getSettingsSetFromEnvironment(
@@ -4516,6 +4566,8 @@ public class Config {
         + telemetryDebugRequestsEnabled
         + ", telemetryMetricsEnabled="
         + telemetryMetricsEnabled
+        + ", appSecScaEnabled="
+        + appSecScaEnabled
         + '}';
   }
 }

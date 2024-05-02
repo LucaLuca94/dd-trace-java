@@ -1,18 +1,15 @@
 plugins {
-  id 'com.gradle.enterprise' version '3.0'
+  id 'com.gradle.develocity' version '3.17.2'
 }
 
 def isCI = System.getenv("CI") != null
 def skipBuildscan = Boolean.valueOf(System.getenv("SKIP_BUILDSCAN"))
-gradleEnterprise {
+develocity {
   buildScan {
-    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-    termsOfServiceAgree = 'yes'
+    termsOfUseUrl = 'https://gradle.com/help/legal-terms-of-use'
+    termsOfUseAgree = 'yes'
 
-    if (isCI && !skipBuildscan) {
-      publishAlways()
-      tag 'CI'
-    }
+    publishing.onlyIf { isCI && !skipBuildscan }
   }
 }
 
@@ -210,6 +207,7 @@ include ':dd-java-agent:instrumentation:elasticsearch:transport-5'
 include ':dd-java-agent:instrumentation:elasticsearch:transport-5.3'
 include ':dd-java-agent:instrumentation:elasticsearch:transport-6'
 include ':dd-java-agent:instrumentation:elasticsearch:transport-7.3'
+include ':dd-java-agent:instrumentation:enable-wallclock-profiling'
 include ':dd-java-agent:instrumentation:exception-profiling'
 include ':dd-java-agent:instrumentation:finatra-2.9'
 include ':dd-java-agent:instrumentation:freemarker'
@@ -338,7 +336,6 @@ include ':dd-java-agent:instrumentation:netty-4.1'
 include ':dd-java-agent:instrumentation:netty-buffer-4'
 include ':dd-java-agent:instrumentation:netty-concurrent-4'
 include ':dd-java-agent:instrumentation:netty-promise-4'
-include ':dd-java-agent:instrumentation:netty-transport-4'
 include ':dd-java-agent:instrumentation:okhttp-2'
 include ':dd-java-agent:instrumentation:okhttp-3'
 include ':dd-java-agent:instrumentation:ognl-appsec'
@@ -365,6 +362,7 @@ include ':dd-java-agent:instrumentation:play-ws'
 include ':dd-java-agent:instrumentation:play-ws-1'
 include ':dd-java-agent:instrumentation:play-ws-2'
 include ':dd-java-agent:instrumentation:play-ws-2.1'
+include ':dd-java-agent:instrumentation:protobuf'
 include ':dd-java-agent:instrumentation:quartz-2'
 include ':dd-java-agent:instrumentation:rabbitmq-amqp-2.7'
 include ':dd-java-agent:instrumentation:ratpack-1.5'
